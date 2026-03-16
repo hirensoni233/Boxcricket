@@ -10,6 +10,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { settings, setSettings, bookings, updateBookingStatus } = useApp();
   const [activeTab, setActiveTab] = useState('bookings');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [formData, setFormData] = useState<TurfSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
@@ -35,9 +36,33 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setSaving(false);
   };
 
+  const matches = Array.from(new Set(bookings.filter(b => b.matchId).map(b => b.matchId))).map(matchId => {
+    const matchBookings = bookings.filter(b => b.matchId === matchId);
+    const matchName = matchBookings[0]?.matchName || 'Unknown Match';
+    const totalPlayers = matchBookings.reduce((sum, b) => b.status !== 'Cancelled' ? sum + b.players : sum, 0);
+    const totalAmount = matchBookings.reduce((sum, b) => b.status !== 'Cancelled' ? sum + b.amount : sum, 0);
+    const date = matchBookings[0]?.date || '-';
+    return { matchId, matchName, totalPlayers, totalAmount, date, bookingsCount: matchBookings.length };
+  });
+
+  const filteredMatches = matches.filter(m => 
+    m.matchName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    m.matchId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.date.includes(searchTerm)
+  );
+
+  const displayBookings = selectedMatchId ? bookings.filter(b => b.matchId === selectedMatchId) : bookings;
+
+  const filteredBookings = displayBookings.filter(b => 
+    b.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    b.date.includes(searchTerm) ||
+    b.matchName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const exportToCSV = () => {
-    const headers = ['ID,Name,Phone,Email,Date,Slot,Players,Amount,Status'];
-    const rows = bookings.map(b => `${b.id},${b.name},${b.phone},${b.email},${b.date},${b.slot},${b.players},${b.amount},${b.status}`);
+    const headers = ['ID,Name,Phone,Email,Date,Slot,Players,Amount,Status,MatchName,MatchID'];
+    const rows = filteredBookings.map(b => `${b.id},${b.name},${b.phone},${b.email},${b.date},${b.slot},${b.players},${b.amount},${b.status},${b.matchName || ''},${b.matchId || ''}`);
     const csvContent = "data:text/csv;charset=utf-8," + headers.concat(rows).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -46,13 +71,6 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     document.body.appendChild(link);
     link.click();
   };
-
-  const filteredBookings = bookings.filter(b => 
-    b.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.date.includes(searchTerm) ||
-    b.matchName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="pt-24 pb-12 px-6 min-h-screen bg-[#070e0a]">
@@ -86,9 +104,16 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
              {activeTab === 'bookings' && (
                <div key="bookings">
                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div>
-                      <h2 className="text-3xl font-black uppercase">Recent Bookings</h2>
-                      <p className="text-white/40">Manage your reservations and payments</p>
+                    <div className="flex items-center gap-4">
+                      {selectedMatchId && (
+                         <button onClick={() => { setSelectedMatchId(null); setSearchTerm(''); }} className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+                           ←
+                         </button>
+                      )}
+                      <div>
+                        <h2 className="text-3xl font-black uppercase">{selectedMatchId ? 'Match Bookings' : 'Match Overview'}</h2>
+                        <p className="text-white/40">{selectedMatchId ? 'Players registered for this match' : 'Select a match to view registered players'}</p>
+                      </div>
                     </div>
                     <div className="flex gap-3 w-full md:w-auto">
                        <div className="relative flex-1">
@@ -96,8 +121,8 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <input 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search name/ID..." 
-                            className="bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-accent outline-none"
+                            placeholder={selectedMatchId ? "Search name/ID..." : "Search match..."} 
+                            className="bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-accent outline-none flex-1 min-w-[200px]"
                           />
                        </div>
                        <button onClick={exportToCSV} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-bold transition-all">
@@ -106,6 +131,28 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                  </div>
 
+                 {!selectedMatchId ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMatches.length === 0 ? (
+                       <div className="col-span-full py-20 text-center text-white/20 uppercase font-bold tracking-[0.5em]">No Matches Found</div>
+                    ) : filteredMatches.map(m => (
+                      <div 
+                        key={m.matchId} 
+                        onClick={() => { setSelectedMatchId(m.matchId || ''); setSearchTerm(''); }}
+                        className="glass-dark p-6 rounded-2xl border border-white/5 hover:border-accent/50 cursor-pointer transition-all group"
+                      >
+                         <h3 className="text-xl font-bold text-white group-hover:text-accent transition-colors">{m.matchName}</h3>
+                         <p className="text-xs text-white/40 font-mono mt-1 mb-4">{m.matchId}</p>
+                         <div className="space-y-2 text-sm">
+                            <div className="flex justify-between"><span className="text-white/40">Date:</span> <span>{m.date}</span></div>
+                            <div className="flex justify-between"><span className="text-white/40">Bookings:</span> <span>{m.bookingsCount}</span></div>
+                            <div className="flex justify-between"><span className="text-white/40">Players:</span> <span className="text-accent font-bold">{m.totalPlayers}</span></div>
+                            <div className="flex justify-between border-t border-white/5 pt-2 mt-2"><span className="text-white/40">Revenue:</span> <span className="font-bold text-green-400">₹{m.totalAmount}</span></div>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                 ) : (
                  <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -172,6 +219,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </tbody>
                     </table>
                  </div>
+                 )}
                </div>
              )}
 
