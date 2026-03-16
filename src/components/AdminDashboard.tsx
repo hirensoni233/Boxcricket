@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   BarChart3, Settings, Camera, Megaphone, 
-  Search, Download, Trash2, AlertTriangle, CheckCircle2
+  Search, Download, Trash2
 } from 'lucide-react';
 import type { TurfSettings } from '../types';
 
 export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const { settings, setSettings, bookings, updateBookingStatus, isConfigured } = useApp();
+  const { settings, setSettings, bookings, updateBookingStatus } = useApp();
   const [activeTab, setActiveTab] = useState('bookings');
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<TurfSettings>(settings);
