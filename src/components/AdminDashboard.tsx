@@ -12,6 +12,12 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<TurfSettings>(settings);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Keep formData in sync when settings load from Supabase
   useEffect(() => {
@@ -20,7 +26,12 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const handleSave = async () => {
     setSaving(true);
-    await setSettings(formData);
+    try {
+      await setSettings(formData);
+      showToast('Settings saved successfully!');
+    } catch (error) {
+      showToast('Failed to save settings', 'error');
+    }
     setSaving(false);
   };
 
@@ -322,6 +333,19 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
              )}
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+          <div className={`px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm ${
+            toast.type === 'success' 
+              ? 'bg-green-500 text-black shadow-[0_0_30px_rgba(34,197,94,0.3)]' 
+              : 'bg-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.3)]'
+          }`}>
+            {toast.type === 'success' ? '✅' : '❌'} {toast.message}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -116,7 +116,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!isConfigured) {
       localStorage.setItem('turf_settings', JSON.stringify(newSettings));
       setSettingsState(newSettings);
-      alert('Settings saved LOCALLY. Add Supabase keys to save to cloud.');
       return;
     }
 
@@ -149,7 +148,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (!error) {
         setSettingsState(newSettings);
-        alert('Settings saved successfully to cloud!');
       } else {
         throw error;
       }
