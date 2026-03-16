@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, Users, Phone, Mail, User, QrCode, CreditCard, CheckCircle2, Copy, Download, Clock } from 'lucide-react';
+import { Calendar, Users, Phone, Mail, User, QrCode, CreditCard, CheckCircle2, Copy, Download, Clock, Trophy } from 'lucide-react';
 import type { Booking } from '../types';
 import emailjs from '@emailjs/browser';
 
@@ -11,9 +11,10 @@ export function BookingForm() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [bookingId, setBookingId] = useState('');
 
-  // Calculate remaining slots for the fixed session
+  // Calculate remaining slots: only count bookings for the CURRENT active match.
+  // This ensures old match bookings don't reduce new match availability.
   const totalBooked = bookings
-    .filter(b => b.date === settings.fixedDate && b.slot === settings.fixedTime && b.status !== 'Cancelled')
+    .filter(b => b.matchId === settings.matchId && b.status !== 'Cancelled')
     .reduce((sum, b) => sum + b.players, 0);
   
   const remainingSlots = Math.max(0, settings.maxTotalSlots - totalBooked);
@@ -127,7 +128,7 @@ export function BookingForm() {
 
       <div className="max-w-4xl mx-auto glass p-8 md:p-12 rounded-[2rem] border-white/10 relative z-10">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-black mb-4">RESERVE YOUR ARENA</h2>
+          <h2 className="text-4xl font-black mb-4">RESERVE YOUR SLOT</h2>
           <div className="flex justify-center gap-2 items-center text-white/40">
             <span className={`w-12 h-1 rounded-full ${step >= 1 ? 'bg-accent' : 'bg-white/10'}`}></span>
             <span className={`w-12 h-1 rounded-full ${step >= 2 ? 'bg-accent' : 'bg-white/10'}`}></span>
@@ -152,6 +153,13 @@ export function BookingForm() {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-white/50 flex items-center gap-2 uppercase tracking-widest"><Mail size={14} /> Email Address *</label>
                   <input required name="email" value={formData.email} onChange={handleInputChange} type="email" placeholder="john@example.com" className="input-field w-full" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-white/50 flex items-center gap-2 uppercase tracking-widest"><Trophy size={14} /> Match Details</label>
+                  <div className="input-field w-full bg-white/5 opacity-80 cursor-default flex flex-col justify-center py-2 h-auto">
+                    <span className="text-accent font-bold">{settings.matchName}</span>
+                    <span className="text-[10px] text-white/40 font-mono">ID: #{settings.matchId}</span>
+                  </div>
                 </div>
                 <div className="space-y-2">
                    <label className="text-sm font-bold text-white/50 flex items-center gap-2 uppercase tracking-widest"><Users size={14} /> Players</label>
