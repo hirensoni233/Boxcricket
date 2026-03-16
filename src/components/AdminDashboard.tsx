@@ -7,10 +7,11 @@ import {
 import type { TurfSettings } from '../types';
 
 export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const { settings, setSettings, bookings, updateBookingStatus } = useApp();
+  const { settings, setSettings, bookings, updateBookingStatus, deleteBooking, deleteMatch } = useApp();
   const [activeTab, setActiveTab] = useState('bookings');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'booking' | 'match'; id: string; name: string } | null>(null);
   const [formData, setFormData] = useState<TurfSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
@@ -34,6 +35,26 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       showToast('Failed to save settings', 'error');
     }
     setSaving(false);
+  };
+
+  // Auto-increment Match IDs: find the highest numeric matchId >= 100, add 1. Start at 101.
+  const nextMatchId = () => {
+    const existingIds = bookings
+      .map(b => parseInt(b.matchId || '0', 10))
+      .filter(n => !isNaN(n) && n >= 100);
+    const max = existingIds.length > 0 ? Math.max(...existingIds) : 100;
+    return String(max + 1);
+  };
+
+  const handleDeleteBooking = async (id: string) => {
+    setConfirmDelete(null);
+    await deleteBooking(id);
+  };
+
+  const handleDeleteMatch = async (matchId: string) => {
+    setConfirmDelete(null);
+    await deleteMatch(matchId);
+    setSelectedMatchId(null);
   };
 
   const matches = Array.from(new Set(bookings.filter(b => b.matchId).map(b => b.matchId))).map(matchId => {
@@ -141,8 +162,16 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         onClick={() => { setSelectedMatchId(m.matchId || ''); setSearchTerm(''); }}
                         className="glass-dark p-6 rounded-2xl border border-white/5 hover:border-accent/50 cursor-pointer transition-all group"
                       >
-                         <h3 className="text-xl font-bold text-white group-hover:text-accent transition-colors">{m.matchName}</h3>
-                         <p className="text-xs text-white/40 font-mono mt-1 mb-4">{m.matchId}</p>
+                         <div className="flex justify-between items-start mb-1">
+                           <h3 className="text-xl font-bold text-white group-hover:text-accent transition-colors">{m.matchName}</h3>
+                           <button
+                             onClick={(e) => { e.stopPropagation(); setConfirmDelete({ type: 'match', id: m.matchId || '', name: m.matchName }); }}
+                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/30 transition-all flex-shrink-0"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+                         </div>
+                         <p className="text-xs text-white/40 font-mono mb-4">#{m.matchId}</p>
                          <div className="space-y-2 text-sm">
                             <div className="flex justify-between"><span className="text-white/40">Date:</span> <span>{m.date}</span></div>
                             <div className="flex justify-between"><span className="text-white/40">Bookings:</span> <span>{m.bookingsCount}</span></div>
@@ -162,12 +191,13 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <th className="py-4 px-4">Details</th>
                           <th className="py-4 px-4">Amount</th>
                           <th className="py-4 px-4">Payment</th>
-                          <th className="py-4 px-4 text-right">Status</th>
+                          <th className="py-4 px-4">Status</th>
+                          <th className="py-4 px-4 text-right">Delete</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredBookings.length === 0 ? (
-                          <tr><td colSpan={6} className="py-20 text-center text-white/20 uppercase font-bold tracking-[0.5em]">No Data Found</td></tr>
+                          <tr><td colSpan={7} className="py-20 text-center text-white/20 uppercase font-bold tracking-[0.5em]">No Data Found</td></tr>
                         ) : filteredBookings.map(b => (
                           <tr key={b.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                             <td className="py-6 px-4">
@@ -197,22 +227,28 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                  </button>
                                ) : "No Image"}
                             </td>
+                            <td className="py-6 px-4">
+                               <select 
+                                 value={b.status}
+                                 onChange={(e) => updateBookingStatus(b.id, e.target.value as any)}
+                                 className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border outline-none ${
+                                   b.status === 'Confirmed' ? 'bg-green-500/10 border-green-500/50 text-green-500' :
+                                   b.status === 'Cancelled' ? 'bg-red-500/10 border-red-500/50 text-red-500' :
+                                   'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
+                                 }`}
+                               >
+                                 <option value="Pending">Pending</option>
+                                 <option value="Confirmed">Confirmed</option>
+                                 <option value="Cancelled">Cancelled</option>
+                               </select>
+                            </td>
                             <td className="py-6 px-4 text-right">
-                               <div className="flex items-center justify-end gap-2">
-                                  <select 
-                                    value={b.status}
-                                    onChange={(e) => updateBookingStatus(b.id, e.target.value as any)}
-                                    className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border outline-none ${
-                                      b.status === 'Confirmed' ? 'bg-green-500/10 border-green-500/50 text-green-500' :
-                                      b.status === 'Cancelled' ? 'bg-red-500/10 border-red-500/50 text-red-500' :
-                                      'bg-yellow-500/10 border-yellow-500/50 text-yellow-500'
-                                    }`}
-                                  >
-                                    <option value="Pending">Pending</option>
-                                    <option value="Confirmed">Confirmed</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                  </select>
-                               </div>
+                              <button
+                                onClick={() => setConfirmDelete({ type: 'booking', id: b.id, name: b.name })}
+                                className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/30 transition-all ml-auto"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -264,13 +300,13 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                              </div>
                              <button 
                                type="button"
-                               onClick={() => setFormData({...formData, matchId: 'M-' + Math.random().toString(36).substring(2, 6).toUpperCase()})}
+                               onClick={() => setFormData({...formData, matchId: nextMatchId()})}
                                className="btn-accent px-6 py-3 whitespace-nowrap text-xs"
                              >
                                NEW MATCH ID
                              </button>
                           </div>
-                          <p className="text-xs text-white/40 mt-2">Active Match ID: <span className="font-mono text-white/60">{formData.matchId || 'None'}</span> (Hidden from public. Generate a new ID to start a fresh match block for bookings.)</p>
+                          <p className="text-xs text-white/40 mt-2">Active Match ID: <span className="font-mono text-white/60">#{formData.matchId || 'None'}</span> (Hidden from public. Click "NEW MATCH ID" to start a fresh match — IDs auto-increment: 101, 102...)</p>
                        </div>
                        <div className="space-y-2">
                           <label className="text-[10px] uppercase font-black text-white/20">Fixed Date (For Users)</label>
@@ -399,6 +435,39 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
              )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-background/80 backdrop-blur-xl">
+          <div className="max-w-sm w-full glass p-8 rounded-3xl border border-red-500/20 text-center">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="text-red-400" size={28} />
+            </div>
+            <h3 className="text-xl font-black mb-2">
+              {confirmDelete.type === 'match' ? 'Delete Entire Match?' : 'Delete Booking?'}
+            </h3>
+            <p className="text-white/50 text-sm mb-6">
+              {confirmDelete.type === 'match'
+                ? `This will permanently delete ALL bookings for "${confirmDelete.name}". Deleted slots will become available again.`
+                : `Remove booking for "${confirmDelete.name}"? Their slot count will be freed up.`}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-3 rounded-xl bg-white/10 font-bold hover:bg-white/20 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => confirmDelete.type === 'match' ? handleDeleteMatch(confirmDelete.id) : handleDeleteBooking(confirmDelete.id)}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toast && (

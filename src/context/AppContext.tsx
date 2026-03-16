@@ -10,6 +10,8 @@ interface AppContextType {
   bookings: Booking[];
   addBooking: (booking: Booking) => Promise<void>;
   updateBookingStatus: (id: string, status: Booking['status']) => Promise<void>;
+  deleteBooking: (id: string) => Promise<void>;
+  deleteMatch: (matchId: string) => Promise<void>;
   loading: boolean;
   isConfigured: boolean;
 }
@@ -227,8 +229,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteBooking = async (id: string) => {
+    if (!isConfigured) {
+      const newBookings = bookings.filter(b => b.id !== id);
+      localStorage.setItem('turf_bookings', JSON.stringify(newBookings));
+      setBookings(newBookings);
+      return;
+    }
+    try {
+      const { error } = await supabase.from('bookings').delete().eq('id', id);
+      if (!error) {
+        setBookings(prev => prev.filter(b => b.id !== id));
+      } else throw error;
+    } catch (error: any) {
+      console.error('Error deleting booking:', error);
+      alert(`Failed to delete booking: ${error.message}`);
+    }
+  };
+
+  const deleteMatch = async (matchId: string) => {
+    if (!isConfigured) {
+      const newBookings = bookings.filter(b => b.matchId !== matchId);
+      localStorage.setItem('turf_bookings', JSON.stringify(newBookings));
+      setBookings(newBookings);
+      return;
+    }
+    try {
+      const { error } = await supabase.from('bookings').delete().eq('match_id', matchId);
+      if (!error) {
+        setBookings(prev => prev.filter(b => b.matchId !== matchId));
+      } else throw error;
+    } catch (error: any) {
+      console.error('Error deleting match:', error);
+      alert(`Failed to delete match: ${error.message}`);
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ settings, setSettings, bookings, addBooking, updateBookingStatus, loading, isConfigured }}>
+    <AppContext.Provider value={{ settings, setSettings, bookings, addBooking, updateBookingStatus, deleteBooking, deleteMatch, loading, isConfigured }}>
       {children}
     </AppContext.Provider>
   );
