@@ -188,8 +188,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } else {
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding booking:', error);
+      alert(`Cloud Booking Failed: ${error.message || 'Check Supabase permissions'}`);
+      throw error;
     }
   };
 

@@ -46,7 +46,7 @@ export function BookingForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 1) {
       setStep(2); // Go to payment
@@ -72,11 +72,16 @@ export function BookingForm() {
       createdAt: new Date().toISOString(),
     };
 
-    setTimeout(() => {
-      addBooking(newBooking);
+    try {
+      // Actually wait for Supabase to save
+      await addBooking(newBooking);
       setIsSubmitting(false);
       setShowSuccess(true);
-    }, 2000);
+    } catch (error) {
+      console.error('Failed to submit booking:', error);
+      alert('Failed to save booking. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const copyUpi = () => {
