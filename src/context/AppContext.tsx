@@ -26,7 +26,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isConfigured) {
       fetchInitialData();
     } else {
-      console.warn('Supabase not configured. Using default settings.');
+      console.warn('Supabase not configured. Using Local Storage fallback.');
+      
+      // Load from Local Storage
+      const localSettings = localStorage.getItem('turf_settings');
+      if (localSettings) {
+        try { setSettingsState(JSON.parse(localSettings)); } catch (e) {}
+      }
+      
+      const localBookings = localStorage.getItem('turf_bookings');
+      if (localBookings) {
+        try { setBookings(JSON.parse(localBookings)); } catch (e) {}
+      }
+      
       setLoading(false);
     }
   }, [isConfigured]);
@@ -102,7 +114,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setSettings = async (newSettings: TurfSettings) => {
     if (!isConfigured) {
-      alert('Supabase is NOT configured. Please add VITE_SUPABASE_URL and KEY to your .env file.');
+      localStorage.setItem('turf_settings', JSON.stringify(newSettings));
+      setSettingsState(newSettings);
+      alert('Settings saved LOCALLY. Add Supabase keys to save to cloud.');
       return;
     }
 
@@ -147,8 +161,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addBooking = async (booking: Booking) => {
     if (!isConfigured) {
-      alert('Saving to Local Storage only (Supabase not configured).');
-      setBookings(prev => [booking, ...prev]);
+      const newBookings = [booking, ...bookings];
+      localStorage.setItem('turf_bookings', JSON.stringify(newBookings));
+      setBookings(newBookings);
+      alert('Booking saved LOCALLY. Add Supabase keys to save to cloud.');
       return;
     }
 
@@ -181,7 +197,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateBookingStatus = async (id: string, status: Booking['status']) => {
     if (!isConfigured) {
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+      const newBookings = bookings.map(b => b.id === id ? { ...b, status } : b);
+      localStorage.setItem('turf_bookings', JSON.stringify(newBookings));
+      setBookings(newBookings);
       return;
     }
 
