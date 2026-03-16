@@ -8,6 +8,8 @@ export interface Booking {
   players: number;
   amount: number;
   paymentScreenshot: string; // Base64 or URL
+  matchName?: string;
+  matchId?: string;
   status: 'Pending' | 'Confirmed' | 'Cancelled';
   createdAt: string;
 }
@@ -31,6 +33,8 @@ export interface TurfSettings {
   fixedDate: string;
   fixedTime: string;
   maxTotalSlots: number;
+  matchName: string;
+  matchId: string;
   gallery: string[];
   announcement: {
     text: string;
@@ -68,6 +72,8 @@ export const DEFAULT_SETTINGS: TurfSettings = {
   fixedDate: new Date().toISOString().split('T')[0],
   fixedTime: "06:00 PM - 09:00 PM (3 Hours)",
   maxTotalSlots: 14,
+  matchName: "Sunday Bash Phase 1",
+  matchId: "M-" + Math.random().toString(36).substring(2, 6).toUpperCase(),
   gallery: [
     "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=1600",
     "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=1600",

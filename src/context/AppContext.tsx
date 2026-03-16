@@ -75,6 +75,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           fixedDate: settingsData.fixed_date,
           fixedTime: settingsData.fixed_time,
           maxTotalSlots: settingsData.max_total_slots,
+          matchName: settingsData.match_name || 'Sunday Bash Phase 1',
+          matchId: settingsData.match_id || 'M-101',
           gallery: settingsData.gallery,
           announcement: settingsData.announcement,
         });
@@ -101,6 +103,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           players: b.players,
           amount: b.amount,
           paymentScreenshot: b.payment_screenshot,
+          matchName: b.match_name,
+          matchId: b.match_id,
           status: b.status,
           createdAt: b.created_at,
         })));
@@ -142,6 +146,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           fixed_date: newSettings.fixedDate,
           fixed_time: newSettings.fixedTime,
           max_total_slots: newSettings.maxTotalSlots,
+          match_name: newSettings.matchName,
+          match_id: newSettings.matchId,
           gallery: newSettings.gallery,
           announcement: newSettings.announcement,
         });
@@ -179,6 +185,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           players: booking.players,
           amount: booking.amount,
           payment_screenshot: booking.paymentScreenshot,
+          match_name: booking.matchName,
+          match_id: booking.matchId,
           status: booking.status,
           created_at: booking.createdAt,
         });

@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS turf_settings (
   fixed_date TEXT,
   fixed_time TEXT,
   max_total_slots INTEGER,
+  match_name TEXT,
+  match_id TEXT,
   gallery JSONB,
   announcement JSONB,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -35,6 +37,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   players INTEGER NOT NULL,
   amount NUMERIC NOT NULL,
   payment_screenshot TEXT,
+  match_name TEXT,
+  match_id TEXT,
   status TEXT DEFAULT 'Pending' CHECK (status IN ('Pending', 'Confirmed', 'Cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -48,7 +52,7 @@ INSERT INTO turf_settings (
   id, name, tagline, description, price_per_player, min_players, max_players, 
   google_maps_link, time_slots, opening_time, closing_time, upi_id, upi_qr_code, 
   bank_details, contact_phone, contact_email, fixed_date, fixed_time, max_total_slots, 
-  gallery, announcement
+  match_name, match_id, gallery, announcement
 )
 VALUES (
   1, 
@@ -70,6 +74,8 @@ VALUES (
   '2026-03-16', 
   '06:00 PM - 09:00 PM (3 Hours)', 
   14, 
+  'Sunday Bash Phase 1',
+  'M-101',
   '["https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=1600", "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=1600", "https://images.unsplash.com/photo-1593341646782-e0b495cff86d?auto=format&fit=crop&q=80&w=1600", "https://images.unsplash.com/photo-1624555130581-1d9cca783bc0?auto=format&fit=crop&q=80&w=1600", "https://images.unsplash.com/photo-1529764958189-38f17a9d59ed?auto=format&fit=crop&q=80&w=1600", "https://images.unsplash.com/photo-1522863700055-e7cf45934673?auto=format&fit=crop&q=80&w=1600"]', 
   '{"text": "Diwali Special: 20% OFF on weekend bookings!", "show": true}'
 ) ON CONFLICT (id) DO NOTHING;

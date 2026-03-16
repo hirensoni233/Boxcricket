@@ -68,6 +68,8 @@ export function BookingForm() {
       players: Number(formData.players),
       amount: totalAmount,
       paymentScreenshot: formData.screenshot,
+      matchName: settings.matchName,
+      matchId: settings.matchId,
       status: 'Pending',
       createdAt: new Date().toISOString(),
     };

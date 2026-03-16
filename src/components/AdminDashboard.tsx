@@ -50,7 +50,8 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const filteredBookings = bookings.filter(b => 
     b.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.date.includes(searchTerm)
+    b.date.includes(searchTerm) ||
+    b.matchName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -134,6 +135,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                <p className="text-sm font-medium">{b.date}</p>
                                <p className="text-xs text-white/40">{b.slot}</p>
                                <p className="text-[10px] uppercase font-bold text-accent mt-1">{b.players} Players</p>
+                               <p className="text-[10px] uppercase font-bold text-white/40 mt-1 tracking-wider">{b.matchName}</p>
                             </td>
                             <td className="py-6 px-4">
                                <p className="font-black text-lg">₹{b.amount}</p>
@@ -205,6 +207,22 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                        <div className="space-y-2">
                           <label className="text-[10px] uppercase font-black text-white/20">Google Maps Link</label>
                           <input className="input-field w-full" value={formData.googleMapsLink} onChange={(e) => setFormData({...formData, googleMapsLink: e.target.value})} />
+                       </div>
+                       <div className="md:col-span-2 space-y-2 p-6 glass-dark border border-accent/20 rounded-xl">
+                          <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
+                             <div className="flex-1 space-y-2 w-full">
+                                <label className="text-[10px] uppercase font-black text-accent">Active Match Name</label>
+                                <input className="input-field w-full border-accent/30 focus:border-accent" value={formData.matchName || ''} onChange={(e) => setFormData({...formData, matchName: e.target.value})} placeholder="e.g. Sunday Bash Phase 1" />
+                             </div>
+                             <button 
+                               type="button"
+                               onClick={() => setFormData({...formData, matchId: 'M-' + Math.random().toString(36).substring(2, 6).toUpperCase()})}
+                               className="btn-accent px-6 py-3 whitespace-nowrap text-xs"
+                             >
+                               NEW MATCH ID
+                             </button>
+                          </div>
+                          <p className="text-xs text-white/40 mt-2">Active Match ID: <span className="font-mono text-white/60">{formData.matchId || 'None'}</span> (Hidden from public. Generate a new ID to start a fresh match block for bookings.)</p>
                        </div>
                        <div className="space-y-2">
                           <label className="text-[10px] uppercase font-black text-white/20">Fixed Date (For Users)</label>
