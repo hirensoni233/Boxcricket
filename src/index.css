@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  --color-primary: #1a472a;
+  --color-accent: #d4af37;
+  --color-background: #0d1b12;
+
+  --background-image-gradient-gold: linear-gradient(135deg, #d4af37 0%, #f1d592 50%, #d4af37 100%);
+  --background-image-gradient-green: linear-gradient(135deg, #1a472a 0%, #2d5a3f 100%);
+
+  --shadow-glow-green: 0 0 15px rgba(26, 71, 42, 0.5);
+  --shadow-glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: white;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .btn-primary {
+    @apply bg-gradient-green text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 hover:shadow-glow-green active:scale-95;
+  }
+
+  .btn-accent {
+    @apply bg-gradient-gold text-background font-bold py-3 px-8 rounded-lg transition-all duration-300 hover:shadow-glow-gold active:scale-95;
+  }
+
+  .input-field {
+    @apply bg-white/5 border border-white/10 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-accent/50 text-white placeholder-white/30;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
