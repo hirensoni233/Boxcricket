@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Calendar, Users, Phone, Mail, User, QrCode, CreditCard, CheckCircle2, Copy, Download, Clock } from 'lucide-react';
 import type { Booking } from '../types';
+import emailjs from '@emailjs/browser';
 
 export function BookingForm() {
   const { settings, addBooking, bookings } = useApp();
@@ -77,6 +78,34 @@ export function BookingForm() {
     try {
       // Actually wait for Supabase to save
       await addBooking(newBooking);
+
+      // Send Confirmation Email
+      const emailParams = {
+        to_name: formData.name,
+        to_email: formData.email,
+        booking_id: id,
+        match_name: settings.matchName || 'Box Cricket Match',
+        date: formData.date,
+        slot: formData.slot,
+        players: formData.players,
+        amount: totalAmount,
+        turf_name: settings.name,
+        contact_phone: settings.contactPhone,
+      };
+
+      try {
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          emailParams,
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        );
+        console.log("Confirmation Email Sent successfully!");
+      } catch (emailError) {
+        console.error("Failed to send confirmation email:", emailError);
+        // We don't block the UI if the email fails, the booking is still confirmed.
+      }
+
       setIsSubmitting(false);
       setShowSuccess(true);
     } catch (error) {
